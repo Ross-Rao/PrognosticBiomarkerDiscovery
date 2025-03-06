@@ -118,7 +118,7 @@ class CAE_DNR(nn.Module):
             data = self.encoder.backbone.conv1.weight.data[:, :2, :, :]  # Better than nothing ... ?
             self.encoder.backbone.conv1 = conv1
             self.encoder.backbone.conv1.weight.data = data
-            self.fc = nn.Linear(hidden_dimension,npc_dimension)
+        self.fc = nn.Linear(hidden_dimension,npc_dimension)
         self.relu = nn.ReLU(inplace=True)
         self.hidden_dimension = hidden_dimension
         self.decoder = SimpleDecoder(hidden_dimension=hidden_dimension)
