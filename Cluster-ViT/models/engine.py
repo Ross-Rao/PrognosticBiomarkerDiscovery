@@ -171,7 +171,7 @@ def evaluate(model, criterion, data_loader, device, output_dir,status):
     return stats
 
 @torch.no_grad()
-def test(model, criterion, test_data_loader, train_data_loader, device, output_dir,fold,coxBiomarkerRisk=None):
+def test(model, criterion, test_data_loader, train_data_loader, device, output_dir,fold):
     model.eval()
     criterion.eval()
 

@@ -2,7 +2,6 @@ import argparse
 import datetime
 import json
 import random
-from re import A
 import time
 from pathlib import Path
 import os
@@ -13,13 +12,14 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, DistributedSampler,random_split
 from sklearn.model_selection import KFold
-import util.misc as utils
+import models.util.misc as utils
 
 from models.engine import evaluate, train_one_epoch_SAM,test
 from models import build_model
 from models.sam import SAM
 from torch.utils.tensorboard import SummaryWriter
-import pandas as pd
+
+
 def get_args_parser():
     parser = argparse.ArgumentParser('Set transformer detector', add_help=False)
     parser.add_argument('--lr', default=1e-4, type=float)
@@ -248,12 +248,12 @@ def main(args):
         bestModel.to(device)
         bestModel.load_state_dict(bestCheckpoint['model'])
         data_loader_train_all = DataLoader(dataset_train_all, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, pin_memory=True)
-        dataset_external_test = MyDataset(root_dir=externalDataDir,sequence_len=args.sequence_len,max_num_cluster=args.max_num_cluster,status='externalTest',input_pool=args.input_pool)
+        dataset_external_test = MyDataset(root_dir=args.externalDataDir,sequence_len=args.sequence_len,max_num_cluster=args.max_num_cluster,status='externalTest',input_pool=args.input_pool)
         dataset_external_test.status = 'externalTest'
         data_loader_external_test = DataLoader(dataset_external_test, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, pin_memory=True)
         externalOutputDir = output_dir / 'externalTest'
         Path(externalOutputDir).mkdir(parents=True, exist_ok=True)
-        internalTestBestModelStatus = test(bestModel, testcriterion, data_loader_test, data_loader_train_all, device, output_dir,fold,coxBiomarkerRisk)
+        internalTestBestModelStatus = test(bestModel, testcriterion, data_loader_test, data_loader_train_all, device, output_dir,fold)
         externalTestBestModelStatus = test(bestModel, testcriterion, data_loader_external_test, data_loader_train_all, device, externalOutputDir,fold)
         log_stats = {
             **{f'testBestModel_{k}': v for k, v in internalTestBestModelStatus.items()},
