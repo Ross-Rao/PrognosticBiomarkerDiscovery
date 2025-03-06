@@ -50,19 +50,20 @@ def model_func(model, optimizer, data_loader, batch_num, npc, ANs_discovery, cri
     tqdm_iterator = tqdm(data_loader, desc='train')
     for batch_idx, data in enumerate(tqdm_iterator):
         data = data[0]        
-        data_in = data['image_he'].cuda().float()
-        data_out = data['image'].cuda().float()
+        data_out = data['image_he'].cuda().float()
+        data_in = data['image'].cuda().float()
         index = data['idx_overall'].cuda().long()
 
         if 'image_pairs' in data:
-            data_in_p = data['image_pairs_he'].cuda().float()
-            data_out_p = data['image_pairs'].cuda().float()
+            data_out_p = data['image_pairs_he'].cuda().float()
+            data_in_p = data['image_pairs'].cuda().float()
             index_p = data['idx_overall'].cuda().long() + n_samples
 
             data_in = torch.cat((data_in, data_in_p), 0)
             data_out = torch.cat((data_out, data_out_p), 0)
             index = torch.cat((index, index_p), 0)
-
+        data_in = data_in.transpose(1, 2)
+        data_out = data_out.transpose(1, 2)
         optimizer.zero_grad()
         x_hat, zp, zb = model(data_in,decode = True)
         # calculate loss and metrics
@@ -142,8 +143,8 @@ def main():
     parser.add_argument('--max_round', default=4, type=int)
     parser.add_argument('--max_epoch', default=25, type=int)
     parser.add_argument('--name', type=str,default='resnet18', help='backbone')    
-    parser.add_argument('--len_allDataset', default=1547467, type=int, help='number of training samples')
-    parser.add_argument('--num_workers', default=8, type=int)
+    parser.add_argument('--len_allDataset', default=35576, type=int, help='number of training samples')
+    parser.add_argument('--num_workers', default=4, type=int)
     parser.add_argument('--phase', default='train',type=str,help='train or test')
     parser.add_argument('--trained_model', type=str,
                         default='./trainedModels/GPU/ResNet18_25rounds/DataParallel_model_3_24.pth/', help='Path to trained models')
@@ -151,7 +152,7 @@ def main():
     args = parser.parse_args()
 
     name=args.name
-    data_train_dir=list(args.db+'IPFCTDatasetDnR64-{:06d}.tar'.format(i) for i in range(0,155))
+    data_train_dir='/home/user2/data/MVI数据/ROI_224_processed_npy.tar'
     drop_last = False
     pin_memory = True
 
@@ -165,10 +166,10 @@ def main():
     
     batch_num = args.len_allDataset//args.batch_size
     ds_train = (
-        wds.WebDataset(data_train_dir)
+        wds.WebDataset(data_train_dir, empty_check=False)
         .shuffle(5000)
         .decode(wds.handle_extension(".npy", npy_allow_pickle_decoder))
-        .to_tuple("npy","metadata.pyd")
+        .to_tuple("npy")
         .map_tuple(transform,identity)
     )
 
